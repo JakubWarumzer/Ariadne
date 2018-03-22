@@ -1,0 +1,1 @@
+print("Ariadne - maze generator & solver.")
