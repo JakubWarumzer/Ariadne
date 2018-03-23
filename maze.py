@@ -1,9 +1,23 @@
 from enum import Enum
 import random
 
-class SpotType(Enum):
+class Border(Enum):
     PASSAGE = 0
     WALL = 1
+
+class Cell:
+    def __init__(self):
+        self.borders = {'N': Border.Wall,
+                        'E': Border.Wall,
+                        'W': Border.Wall,
+                        'S': Border.Wall}
+
+    def carve_passage(self, direction):
+        if direction not in self.borders:
+            raise ValueError('Direction has to be N, E, W or S.')
+        else:
+            self.borders[direction] = Border.PASSAGE
+    
 
 class Maze:
     def __init__(self, width, height):
@@ -21,7 +35,7 @@ class Maze:
 
     def generate(self):
         #At first, we fill labirynth with walls
-        self.area = [[SpotType.WALL]*self.width for i in range(self.height)]
+        self.area = [[Cell()]*self.width for i in range(self.height)]
         
         #Then, we pick Entry and Exit
         self.entry = 0, random.randint(1, self.width - 2)
@@ -29,6 +43,15 @@ class Maze:
 
         self.create_passage(self.entry)
         self.create_passage(self.exit)
+
+        #Now, we can create random web of passage between Entry and Exit
+
+    def check_if_border_wall(self, point):
+        if point[0] == 0 or point[0] == self.height - 1: return True
+        if point[1] == 0 or point[1] == self.width - 1: return True
+
+        return False
+
 
     def create_passage(self, point):
         self.area[point[0]][point[1]] = SpotType.PASSAGE
