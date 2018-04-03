@@ -1,7 +1,8 @@
 import random
 import time
 import os
-from cell import Cell, Direction, Border  
+from termcolor import colored, cprint
+from cell import Cell, Direction, Border
 
 class Maze:
     def __init__(self, width, height):
@@ -13,10 +14,12 @@ class Maze:
 
         self.width = width
         self.height = height
+
+        self.entrance = 0, random.randint(0, self.width-1)
+        self.exit = self.height-1, random.randint(0, self.width-1)
        
         #For convinience, we use dictionary as a two-dimensional array substitute
-        self.area = {} 
-
+        self.area = {}
         self.generate()
 
     #Function used to initialize area
@@ -26,9 +29,18 @@ class Maze:
             for j in range(self.width):
                 self.area[i,j] = Cell()
 
+        #Removing appropriate walls from entrance/exit
+        self.area[self.entrance].carve_passage(Direction.NORTH)
+        self.area[self.exit].carve_passage(Direction.SOUTH)
+
         #Now, we can create random web of passages from starting point
-        starting_point = 0, 0
-        self.create_passages(starting_point)
+        self.create_passages(self.entrance)
+
+        #Resetting Cell's visited value allows Ariadne to generate path
+        for i in range(self.height):
+            for j in range(self.width):
+                self.area[i,j].visited = False
+
 
     #Implementation of recursive backtracking algorithm 
     def create_passages(self, point):
@@ -45,7 +57,7 @@ class Maze:
                 if self.area[shifted_point].visited: continue
                 else:
                     #animating creation
-                    self.display()
+                    #self.display()
                     
                     #we don't want to come back to this cell in the future
                     self.area[shifted_point].visited = True
@@ -58,25 +70,29 @@ class Maze:
                 continue
 
 
-    def display(self):
+    def display(self, path_to_exit=[]):
         os.system('clear')
 
         #Upper border, always solid
         for i in range(self.width):
-            print(" _", end='')
-        
+            if (0, i) == self.entrance: print('  ', end='')
+            else: print(' _', end='')
         
         #Then we display borders for each cell
         for i in range(self.height):
             print('')
             
             for j in range(self.width):
-                print('|', end='') if self.area[i,j].borders[Direction.WEST] == Border.WALL else print(' ', end='')
-                print('_', end='') if self.area[i,j].borders[Direction.SOUTH] == Border.WALL else print(' ', end='')
+                if (i, j) in path_to_exit: 
+                    cprint('|', 'white', 'on_green', end='') if self.area[i,j].borders[Direction.WEST] == Border.WALL else cprint(' ', 'white', 'on_green', end='')         
+                    cprint('_', 'white', 'on_green', end='') if self.area[i,j].borders[Direction.SOUTH] == Border.WALL else cprint(' ', 'white', 'on_green', end='')
+                else:
+                    print('|', end='') if self.area[i,j].borders[Direction.WEST] == Border.WALL else print(' ', end='')
+                    print('_', end='') if self.area[i,j].borders[Direction.SOUTH] == Border.WALL else print(' ', end='')
 
                 if j == self.width - 1: print('|', end='')         
 
         print('')
 
         #short sleep for animation's sake
-        time.sleep(.01)
+        time.sleep(.05)
